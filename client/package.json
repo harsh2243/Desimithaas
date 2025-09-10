@@ -2,9 +2,16 @@
   "name": "thekua-frontend",
   "version": "1.0.0",
   "description": "Frontend for Thekua e-commerce website",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "postinstall": "chmod +x node_modules/.bin/* || exit 0",
+    "prebuild": "chmod +x node_modules/.bin/vite || exit 0",
+    "build": "node node_modules/vite/bin/vite.js build",
+    "build:alt": "npx vite build",
     "preview": "vite preview",
     "lint": "eslint src --ext js,jsx --report-unused-disable-directives --max-warnings 0"
   },
@@ -20,8 +27,7 @@
     "react-hook-form": "^7.45.0",
     "react-hot-toast": "^2.4.1",
     "react-router-dom": "^6.15.0",
-    "tailwind-merge": "^1.14.0",
-    "vite": "^7.1.5"
+    "tailwind-merge": "^1.14.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.35.0",

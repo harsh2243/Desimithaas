@@ -21,10 +21,5 @@
   ],
   "env": {
     "NODE_VERSION": "18"
-  },
-  "functions": {
-    "server/index.js": {
-      "runtime": "nodejs18.x"
-    }
   }
 }

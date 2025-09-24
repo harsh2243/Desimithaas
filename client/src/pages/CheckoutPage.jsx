@@ -63,7 +63,7 @@ const CheckoutPage = () => {
   // Place order mutation
   const placeOrderMutation = useMutation({
     mutationFn: async (orderData) => {
-      const response = await fetch('http://localhost:5001/api/orders', {
+  const response = await fetch(`${import.meta.env.BACKEND_URL}/api/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -160,7 +160,7 @@ const CheckoutPage = () => {
   const handleRazorpayPayment = async (orderData) => {
     try {
       // Create Razorpay order
-      const response = await fetch('http://localhost:5001/api/payments/create-razorpay-order', {
+  const response = await fetch(`${import.meta.env.BACKEND_URL}/api/payments/create-razorpay-order`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -180,7 +180,7 @@ const CheckoutPage = () => {
       }
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+  key: import.meta.env.RZP_ID,
         amount: result.data.amount,
         currency: result.data.currency,
         name: 'TheKua',

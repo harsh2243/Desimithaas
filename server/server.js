@@ -1,78 +1,32 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 // Import routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
-const userProfileRoutes = require('./routes/user');
-const adminRoutes = require('./routes/admin');
-const orderRoutes = require('./routes/orders');
 const productRoutes = require('./routes/products');
-const paymentRoutes = require('./routes/payments');
-const socialAuthRoutes = require('./routes/socialAuth');
-const couponRoutes = require('./routes/coupons');
+const orderRoutes = require('./routes/orders');
 
 const app = express();
 
-// CORS configuration - MUST be first before any other middleware
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:3000'];
-
-const corsOptions = {
-  origin: allowedOrigins,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
-};
-
-app.use(cors(corsOptions));
-
-// Additional CORS preflight handling
-app.options('*', cors(corsOptions)); // Enable preflight for all routes
-
-// Security middleware
-app.use(helmet({
-  crossOriginEmbedderPolicy: false // Disable this for CORS compatibility
+// Simple CORS setup
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS || 'http://localhost:3000',
+  credentials: true
 }));
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
-  message: {
-    error: 'Too many requests from this IP, please try again later.'
-  }
-});
-app.use('/api/', limiter);
-
-// Body parser middleware
-// Middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Basic middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Serve static files for uploads
 app.use('/uploads', express.static('uploads'));
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/thekua-website', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => {
-  console.log('✅ Connected to MongoDB');
-  // Create default admin user and products
-  const User = require('./models/User');
-  const Product = require('./models/Product');
-  User.createDefaultAdmin();
-  Product.createDefaultProducts();
-})
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/thekua-website')
+.then(() => console.log('✅ Connected to MongoDB'))
 .catch((err) => {
   console.error('❌ MongoDB connection error:', err);
   process.exit(1);
@@ -80,14 +34,9 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/thekua-we
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/auth', socialAuthRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/user', userProfileRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/orders', orderRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/coupons', couponRoutes);
+app.use('/api/orders', orderRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -99,45 +48,10 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Error handling middleware
+// Simple error handling
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  
-  if (err.name === 'ValidationError') {
-    const errors = Object.values(err.errors).map(e => e.message);
-    return res.status(400).json({
-      status: 'error',
-      message: 'Validation Error',
-      errors
-    });
-  }
-  
-  if (err.name === 'JsonWebTokenError') {
-    return res.status(401).json({
-      status: 'error',
-      message: 'Invalid token'
-    });
-  }
-  
-  if (err.name === 'TokenExpiredError') {
-    return res.status(401).json({
-      status: 'error',
-      message: 'Token expired'
-    });
-  }
-  
-  res.status(err.status || 500).json({
-    status: 'error',
-    message: err.message || 'Internal server error'
-  });
-});
-
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    status: 'error',
-    message: `Route ${req.originalUrl} not found`
-  });
+  console.error(err);
+  res.status(500).json({ error: err.message });
 });
 
 const PORT = process.env.PORT || 5001;

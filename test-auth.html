@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Login/Signup Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 500px; margin: 50px auto; padding: 20px; }
+        .form { border: 1px solid #ddd; padding: 20px; margin: 20px 0; border-radius: 5px; }
+        input { width: 100%; padding: 10px; margin: 5px 0; box-sizing: border-box; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin-top: 10px; padding: 10px; border-radius: 3px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <h1>🔐 Simple Login/Signup Test</h1>
+    
+    <!-- Registration Form -->
+    <div class="form">
+        <h2>📝 Register</h2>
+        <input type="text" id="regFirstName" placeholder="First Name" required>
+        <input type="text" id="regLastName" placeholder="Last Name" required>
+        <input type="email" id="regEmail" placeholder="Email" required>
+        <input type="password" id="regPassword" placeholder="Password" required>
+        <button onclick="register()">Register</button>
+        <div id="regResult"></div>
+    </div>
+
+    <!-- Login Form -->
+    <div class="form">
+        <h2>🔑 Login</h2>
+        <input type="email" id="loginEmail" placeholder="Email" required>
+        <input type="password" id="loginPassword" placeholder="Password" required>
+        <button onclick="login()">Login</button>
+        <div id="loginResult"></div>
+    </div>
+
+    <!-- Server Test -->
+    <div class="form">
+        <h2>🧪 Server Test</h2>
+        <button onclick="testServer()">Test Server</button>
+        <div id="testResult"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+
+        async function testServer() {
+            const resultDiv = document.getElementById('testResult');
+            try {
+                const response = await fetch(`${API_URL}/test`);
+                const data = await response.json();
+                resultDiv.innerHTML = `<div class="success">✅ Server working: ${data.message}</div>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Server error: ${error.message}</div>`;
+            }
+        }
+
+        async function register() {
+            const resultDiv = document.getElementById('regResult');
+            const data = {
+                firstName: document.getElementById('regFirstName').value,
+                lastName: document.getElementById('regLastName').value,
+                email: document.getElementById('regEmail').value,
+                password: document.getElementById('regPassword').value
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `<div class="success">✅ Registration successful! Welcome ${result.user.firstName}!</div>`;
+                    localStorage.setItem('token', result.token);
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Registration failed: ${result.message}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Network error: ${error.message}</div>`;
+            }
+        }
+
+        async function login() {
+            const resultDiv = document.getElementById('loginResult');
+            const data = {
+                email: document.getElementById('loginEmail').value,
+                password: document.getElementById('loginPassword').value
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `<div class="success">✅ Login successful! Welcome back ${result.user.firstName}!</div>`;
+                    localStorage.setItem('token', result.token);
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Login failed: ${result.message}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Network error: ${error.message}</div>`;
+            }
+        }
+
+        // Test server on page load
+        window.onload = function() {
+            testServer();
+        };
+    </script>
+</body>
+</html>

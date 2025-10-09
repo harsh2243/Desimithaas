@@ -11,32 +11,13 @@ const orderRoutes = require('./routes/orders');
 
 const app = express();
 
-// Simple but robust CORS setup
+// Simple CORS setup for localhost development
 app.use(cors({
-  origin: '*', // Allow all origins for now
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:8080', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001', 'http://127.0.0.1:8080'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
-  optionsSuccessStatus: 200
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With']
 }));
-
-// Handle preflight requests explicitly
-app.options('*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Origin, X-Requested-With');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.sendStatus(200);
-});
-
-// Add CORS headers to all responses
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Origin, X-Requested-With');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  next();
-});
 
 // Basic middleware
 app.use(express.json());
@@ -46,7 +27,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/thekua-website')
+// Online MongoDB Atlas (currently active for testing)
+mongoose.connect('mongodb+srv://ar7220487:BeqSER64EF7D874E@cluster0.qweqxpj.mongodb.net/thekua-website')
+// Local MongoDB (commented for now - make sure MongoDB is installed and running locally)
+// mongoose.connect('mongodb://localhost:27017/thekua-website')
 .then(() => console.log('✅ Connected to MongoDB'))
 .catch((err) => {
   console.error('❌ MongoDB connection error:', err);
@@ -81,12 +65,13 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message });
 });
 
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV}`);
-  console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`📊 Environment: development`);
+  console.log(`🔐 Auth: POST http://localhost:${PORT}/api/auth/login`);
+  console.log(`📝 Register: POST http://localhost:${PORT}/api/auth/register`);
 });
 
 module.exports = app;

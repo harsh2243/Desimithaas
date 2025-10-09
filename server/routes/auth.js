@@ -8,7 +8,12 @@ const router = express.Router();
 // Register
 router.post('/register', async (req, res) => {
   try {
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password, phone } = req.body;
+    
+    // Validation
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
     
     // Check if user exists
     const existingUser = await User.findOne({ email });
@@ -21,13 +26,15 @@ router.post('/register', async (req, res) => {
       firstName,
       lastName,
       email,
-      password
+      password,
+      phone,
+      role: 'user'
     });
     
     await user.save();
     
     // Create token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || 'secret');
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || 'secret123', { expiresIn: '7d' });
     
     res.json({
       message: 'User created successfully',
@@ -36,7 +43,9 @@ router.post('/register', async (req, res) => {
         id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
-        email: user.email
+        email: user.email,
+        phone: user.phone,
+        role: user.role
       }
     });
   } catch (error) {
@@ -49,6 +58,11 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     
+    // Validation
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+    
     // Find user
     const user = await User.findOne({ email });
     if (!user) {
@@ -56,13 +70,13 @@ router.post('/login', async (req, res) => {
     }
     
     // Check password
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(400).json({ error: 'Invalid email or password' });
     }
     
     // Create token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || 'secret');
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || 'secret123', { expiresIn: '7d' });
     
     res.json({
       message: 'Login successful',
@@ -72,6 +86,7 @@ router.post('/login', async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
+        phone: user.phone,
         role: user.role
       }
     });
@@ -88,7 +103,7 @@ router.get('/profile', async (req, res) => {
       return res.status(401).json({ error: 'No token provided' });
     }
     
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret123');
     const user = await User.findById(decoded.userId).select('-password');
     
     if (!user) {

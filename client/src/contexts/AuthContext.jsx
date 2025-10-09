@@ -77,21 +77,21 @@ export function AuthProvider({ children }) {
   const login = async (credentials) => {
     try {
       const response = await authAPI.login(credentials)
-      const { user, accessToken } = response.data.data
+      const { user, token } = response.data
       
-      localStorage.setItem('token', accessToken)
+      localStorage.setItem('token', token)
       dispatch({
         type: 'LOGIN_SUCCESS',
         payload: {
           user,
-          token: accessToken,
+          token,
         },
       })
       
       toast.success(`Welcome back, ${user.firstName}!`)
-      return { success: true, user, token: accessToken }
+      return { success: true, user, token }
     } catch (error) {
-      const message = error.response?.data?.message || 'Login failed'
+      const message = error.response?.data?.error || error.response?.data?.message || 'Login failed'
       toast.error(message)
       return { success: false, error: message }
     }
@@ -100,21 +100,21 @@ export function AuthProvider({ children }) {
   const register = async (userData) => {
     try {
       const response = await authAPI.register(userData)
-      const { user, accessToken } = response.data.data
+      const { user, token } = response.data
       
-      localStorage.setItem('token', accessToken)
+      localStorage.setItem('token', token)
       dispatch({
         type: 'LOGIN_SUCCESS',
         payload: {
           user,
-          token: accessToken,
+          token,
         },
       })
       
-      toast.success(`Welcome to TheKua, ${user.firstName}!`)
+      toast.success(`Welcome to Desimithas, ${user.firstName}!`)
       return { success: true }
     } catch (error) {
-      const message = error.response?.data?.message || 'Registration failed'
+      const message = error.response?.data?.error || error.response?.data?.message || 'Registration failed'
       toast.error(message)
       return { success: false, error: message }
     }

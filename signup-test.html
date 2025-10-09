@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup Test - Desimithas</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 500px; margin: 20px auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .response { margin-top: 15px; padding: 10px; border-radius: 4px; white-space: pre-wrap; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <h1>🔐 Signup Test - Desimithas</h1>
+    <p><strong>Server:</strong> http://localhost:3000</p>
+
+    <form id="signupForm">
+        <div class="form-group">
+            <label>First Name:</label>
+            <input type="text" id="firstName" required value="John">
+        </div>
+        <div class="form-group">
+            <label>Last Name:</label>
+            <input type="text" id="lastName" required value="Doe">
+        </div>
+        <div class="form-group">
+            <label>Email:</label>
+            <input type="email" id="email" required value="john.doe@test.com">
+        </div>
+        <div class="form-group">
+            <label>Phone:</label>
+            <input type="tel" id="phone" value="1234567890">
+        </div>
+        <div class="form-group">
+            <label>Password:</label>
+            <input type="password" id="password" required value="password123">
+        </div>
+        <button type="submit">Sign Up</button>
+    </form>
+
+    <div id="response" class="response"></div>
+
+    <script>
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userData = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                password: document.getElementById('password').value
+            };
+
+            const responseDiv = document.getElementById('response');
+            responseDiv.textContent = 'Processing...';
+
+            try {
+                console.log('Sending signup request:', userData);
+                
+                const response = await fetch('http://localhost:3000/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData)
+                });
+
+                const result = await response.json();
+                console.log('Signup response:', response.status, result);
+
+                if (response.ok) {
+                    responseDiv.className = 'response success';
+                    responseDiv.textContent = `✅ Signup Successful!\n\nMessage: ${result.message}\nUser ID: ${result.user.id}\nName: ${result.user.firstName} ${result.user.lastName}\nEmail: ${result.user.email}\nRole: ${result.user.role}\nToken: ${result.token}`;
+                } else {
+                    responseDiv.className = 'response error';
+                    responseDiv.textContent = `❌ Signup Failed!\n\nError: ${result.error || result.message}\nStatus: ${response.status}`;
+                }
+            } catch (error) {
+                console.error('Network error:', error);
+                responseDiv.className = 'response error';
+                responseDiv.textContent = `❌ Network Error!\n\n${error.message}`;
+            }
+        });
+
+        // Auto-generate unique email on page load
+        window.onload = function() {
+            const timestamp = new Date().getTime();
+            document.getElementById('email').value = `john.doe.${timestamp}@test.com`;
+        };
+    </script>
+</body>
+</html>

@@ -11,11 +11,36 @@ const orderRoutes = require('./routes/orders');
 
 const app = express();
 
-// Simple CORS setup
+// CORS setup with better preflight handling
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ['http://localhost:3000', 'http://localhost:3001'];
+
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS || 'http://localhost:3000',
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // For development, be more lenient
+    if (process.env.NODE_ENV === 'development') {
+      return callback(null, true);
+    }
+    
+    const msg = 'The CORS policy for this origin does not allow access from the particular origin.';
+    return callback(new Error(msg), false);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+  optionsSuccessStatus: 200
 }));
+
+// Handle preflight requests
+app.options('*', cors());
 
 // Basic middleware
 app.use(express.json());

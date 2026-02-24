@@ -73,6 +73,22 @@ if (mongoUri) {
   console.warn('⚠️ MONGODB_URI not set. Database-backed routes may fail.');
 }
 
+// Root route
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'Thekua Backend API',
+    endpoints: {
+      health: '/api/health',
+      products: '/api/products',
+      auth: '/api/auth',
+      orders: '/api/orders',
+      admin: '/api/admin'
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);

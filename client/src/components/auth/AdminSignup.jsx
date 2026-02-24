@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { backendUrl } from '../../config/runtime';
 
 const AdminSignup = () => {
   const [formData, setFormData] = useState({
@@ -47,7 +48,7 @@ const AdminSignup = () => {
     }
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/register`, {
+      const response = await fetch(`${backendUrl}/api/admin/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

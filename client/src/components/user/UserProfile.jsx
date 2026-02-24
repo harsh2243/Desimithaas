@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { Camera, User, MapPin, Phone, Mail, Edit2, Save, X } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { backendUrl } from '../../config/runtime';
 
 const UserProfile = () => {
   const { user, updateUser } = useAuth();
@@ -28,7 +29,7 @@ const UserProfile = () => {
   // Update profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (data) => {
-  const response = await fetch(`${import.meta.env.BACKEND_URL}/api/auth/profile`, {
+  const response = await fetch(`${backendUrl}/api/auth/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -63,7 +64,7 @@ const UserProfile = () => {
       const formData = new FormData();
       formData.append('profilePicture', file);
       
-  const response = await fetch(`${import.meta.env.BACKEND_URL}/api/user/upload-avatar`, {
+  const response = await fetch(`${backendUrl}/api/user/upload-avatar`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`

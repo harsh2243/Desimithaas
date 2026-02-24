@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { backendUrl } from '../../config/runtime';
 
 const UserLogin = () => {
   const [formData, setFormData] = useState({
@@ -23,7 +24,7 @@ const UserLogin = () => {
     setError('');
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/login`, {
+      const response = await fetch(`${backendUrl}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

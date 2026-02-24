@@ -5,6 +5,7 @@ import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
+import { backendUrl, razorpayKeyId } from '../config/runtime';
 import { 
   CreditCard, 
   Smartphone, 
@@ -63,7 +64,7 @@ const CheckoutPage = () => {
   // Place order mutation
   const placeOrderMutation = useMutation({
     mutationFn: async (orderData) => {
-  const response = await fetch(`${import.meta.env.BACKEND_URL}/api/orders`, {
+  const response = await fetch(`${backendUrl}/api/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -160,7 +161,7 @@ const CheckoutPage = () => {
   const handleRazorpayPayment = async (orderData) => {
     try {
       // Create Razorpay order
-  const response = await fetch(`${import.meta.env.BACKEND_URL}/api/payments/create-razorpay-order`, {
+  const response = await fetch(`${backendUrl}/api/payments/create-razorpay-order`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -180,7 +181,7 @@ const CheckoutPage = () => {
       }
 
       const options = {
-  key: import.meta.env.RZP_ID,
+  key: razorpayKeyId,
         amount: result.data.amount,
         currency: result.data.currency,
         name: 'TheKua',

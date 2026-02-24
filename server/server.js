@@ -12,13 +12,47 @@ const adminRoutes = require('./routes/admin');
 
 const app = express();
 
-// Simple CORS setup for localhost development
-app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:8080', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001', 'http://127.0.0.1:8080'],
+const defaultOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:8080',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:3001',
+  'http://127.0.0.1:8080',
+  'https://desimithaas.vercel.app'
+];
+
+const allowedOrigins = [
+  ...new Set([
+    ...defaultOrigins,
+    ...(process.env.ALLOWED_ORIGINS || '').split(',').map((origin) => origin.trim()).filter(Boolean),
+    ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL.trim()] : [])
+  ])
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    const isAllowed =
+      allowedOrigins.includes(origin) ||
+      /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin);
+
+    if (isAllowed) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With']
-}));
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Basic middleware
 app.use(express.json());
@@ -27,16 +61,17 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files for uploads
 app.use('/uploads', express.static('uploads'));
 
-// Database connection
-// Online MongoDB Atlas (currently active for testing)
-mongoose.connect('mongodb+srv://ar7220487:BeqSER64EF7D874E@cluster0.qweqxpj.mongodb.net/thekua-website')
-// Local MongoDB (commented for now - make sure MongoDB is installed and running locally)
-// mongoose.connect('mongodb://localhost:27017/thekua-website')
-.then(() => console.log('✅ Connected to MongoDB'))
-.catch((err) => {
-  console.error('❌ MongoDB connection error:', err);
-  process.exit(1);
-});
+const mongoUri = process.env.MONGODB_URI;
+
+if (mongoUri) {
+  mongoose.connect(mongoUri)
+    .then(() => console.log('✅ Connected to MongoDB'))
+    .catch((err) => {
+      console.error('❌ MongoDB connection error:', err.message);
+    });
+} else {
+  console.warn('⚠️ MONGODB_URI not set. Database-backed routes may fail.');
+}
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -69,11 +104,13 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📊 Environment: development`);
-  console.log(`🔐 Auth: POST http://localhost:${PORT}/api/auth/login`);
-  console.log(`📝 Register: POST http://localhost:${PORT}/api/auth/register`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔐 Auth: POST http://localhost:${PORT}/api/auth/login`);
+    console.log(`📝 Register: POST http://localhost:${PORT}/api/auth/register`);
+  });
+}
 
 module.exports = app;

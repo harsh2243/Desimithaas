@@ -1,9 +1,5 @@
 import axios from 'axios'
-
-const backendUrl = (import.meta.env.VITE_BACKEND_URL || '').trim()
-const apiBaseUrl = backendUrl
-  ? `${backendUrl.replace(/\/$/, '')}/api`
-  : '/api'
+import { apiBaseUrl } from '../config/runtime'
 
 // Create axios instance
 const api = axios.create({

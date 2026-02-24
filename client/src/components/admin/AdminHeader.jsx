@@ -11,6 +11,8 @@ function AdminHeader({ setSidebarOpen, currentPath }) {
   const { logout, user } = useAuth();
   
   const handleLogout = () => {
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminUser');
     logout();
     navigate('/'); // Redirect to home page
   };

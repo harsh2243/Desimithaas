@@ -49,7 +49,19 @@ const orderSchema = new mongoose.Schema({
     default: 'pending'
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+// Virtual field to alias 'status' as 'orderStatus' for backward compatibility
+orderSchema.virtual('orderStatus').get(function() {
+  return this.status;
+});
+
+// When setting orderStatus, update status field
+orderSchema.virtual('orderStatus').set(function(value) {
+  this.status = value;
 });
 
 module.exports = mongoose.model('Order', orderSchema);

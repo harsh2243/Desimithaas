@@ -176,7 +176,7 @@ function AdminUsers() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Total Users</p>
-                <p className="text-2xl font-bold">{usersData?.totalUsers || 0}</p>
+                <p className="text-2xl font-bold">{usersData?.stats?.totalUsers || 0}</p>
               </div>
               <UserCheck className="w-8 h-8 text-blue-500" />
             </div>
@@ -187,7 +187,7 @@ function AdminUsers() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Admin Users</p>
-                <p className="text-2xl font-bold">{usersData?.adminUsers || 0}</p>
+                <p className="text-2xl font-bold">{usersData?.stats?.adminUsers || 0}</p>
               </div>
               <Shield className="w-8 h-8 text-red-500" />
             </div>
@@ -198,7 +198,7 @@ function AdminUsers() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Active Users</p>
-                <p className="text-2xl font-bold">{usersData?.activeUsers || 0}</p>
+                <p className="text-2xl font-bold">{usersData?.stats?.activeUsers || 0}</p>
               </div>
               <UserCheck className="w-8 h-8 text-green-500" />
             </div>
@@ -209,7 +209,7 @@ function AdminUsers() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">New This Month</p>
-                <p className="text-2xl font-bold">{usersData?.newUsers || 0}</p>
+                <p className="text-2xl font-bold">{usersData?.stats?.newUsersThisMonth || 0}</p>
               </div>
               <Calendar className="w-8 h-8 text-purple-500" />
             </div>

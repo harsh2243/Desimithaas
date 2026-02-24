@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '../../contexts/AuthContext';
 
 const AdminLogin = () => {
   const [formData, setFormData] = useState({
@@ -9,6 +10,7 @@ const AdminLogin = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { login, logout } = useAuth();
 
   const handleChange = (e) => {
     setFormData({
@@ -22,31 +24,25 @@ const AdminLogin = () => {
     setIsLoading(true);
 
     try {
-  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      const result = await login(formData);
 
-      const data = await response.json();
+      if (result.success) {
+        const user = result.user;
+        const token = result.token;
 
-      if (response.ok) {
-        // Check if user is admin
-        if (data.data.user.role !== 'admin') {
+        if (!user || user.role !== 'admin') {
+          logout();
           toast.error('Access denied. Admin privileges required.');
           return;
         }
 
-        // Store admin data
-        localStorage.setItem('adminToken', data.data.accessToken);
-        localStorage.setItem('adminUser', JSON.stringify(data.data.user));
-        
+        localStorage.setItem('adminToken', token);
+        localStorage.setItem('adminUser', JSON.stringify(user));
+
         toast.success('Welcome to Admin Dashboard!');
-        navigate('/admin');
+        navigate('/admin', { replace: true });
       } else {
-        toast.error(data.message || 'Login failed');
+        toast.error(result.error || 'Login failed');
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -68,15 +64,6 @@ const AdminLogin = () => {
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Admin Login</h1>
           <p className="text-blue-200">Access the dashboard with admin credentials</p>
-        </div>
-
-        {/* Demo Credentials */}
-        <div className="bg-blue-500/20 border border-blue-400/30 rounded-lg p-4 mb-6">
-          <h3 className="text-sm font-semibold text-blue-200 mb-2">Demo Credentials:</h3>
-          <div className="text-xs text-blue-100 space-y-1">
-            <div>Email: admin@thekua.com</div>
-            <div>Password: Admin@123</div>
-          </div>
         </div>
 
         {/* Login Form */}

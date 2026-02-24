@@ -56,7 +56,8 @@ function AdminOrders() {
       console.log('Order status updated successfully:', response)
     },
     onError: (error) => {
-      toast.error('Failed to update order status')
+      const errorMessage = error.response?.data?.message || 'Failed to update order status'
+      toast.error(errorMessage)
       console.error('Failed to update order status:', error)
     }
   })
@@ -276,7 +277,8 @@ function AdminOrders() {
                               value={order.orderStatus}
                               onChange={(e) => handleStatusChange(order._id, e.target.value)}
                               className="text-xs border rounded px-2 py-1"
-                              disabled={updateStatusMutation.isPending}
+                              disabled={updateStatusMutation.isPending || order.orderStatus === 'delivered'}
+                              title={order.orderStatus === 'delivered' ? 'Cannot change status of delivered orders' : ''}
                             >
                               <option value="pending">Pending</option>
                               <option value="confirmed">Confirmed</option>
@@ -507,7 +509,8 @@ function AdminOrders() {
                     setSelectedOrder({ ...selectedOrder, orderStatus: e.target.value })
                   }}
                   className="btn btn-primary flex-1"
-                  disabled={updateStatusMutation.isPending}
+                  disabled={updateStatusMutation.isPending || selectedOrder.orderStatus === 'delivered'}
+                  title={selectedOrder.orderStatus === 'delivered' ? 'Cannot change status of delivered orders' : ''}
                 >
                   <option value="pending">Mark as Pending</option>
                   <option value="confirmed">Mark as Confirmed</option>

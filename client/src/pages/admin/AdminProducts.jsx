@@ -168,13 +168,11 @@ function AdminProducts() {
     }
 
     const submitData = new FormData()
-    
-    // Add form fields
-    Object.keys(formData).forEach(key => {
+
+    Object.keys(formData).forEach((key) => {
       submitData.append(key, formData[key])
     })
-    
-    // Add image file if selected
+
     if (selectedFile) {
       submitData.append('mainImage', selectedFile)
     }

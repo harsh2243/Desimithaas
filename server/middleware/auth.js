@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const JWT_SECRET = process.env.JWT_SECRET || 'secret123';
 
 // Middleware to verify JWT token
 const authenticateToken = async (req, res, next) => {
@@ -15,7 +16,7 @@ const authenticateToken = async (req, res, next) => {
     }
     
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     
     // Get user from database
     const user = await User.findById(decoded.userId).select('-password');
@@ -27,7 +28,7 @@ const authenticateToken = async (req, res, next) => {
       });
     }
     
-    if (!user.isActive) {
+    if (user.isActive === false) {
       return res.status(401).json({
         status: 'error',
         message: 'Account has been deactivated'
@@ -116,10 +117,10 @@ const optionalAuth = async (req, res, next) => {
     const token = authHeader && authHeader.split(' ')[1];
     
     if (token) {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, JWT_SECRET);
       const user = await User.findById(decoded.userId).select('-password');
       
-      if (user && user.isActive && !user.isLocked) {
+      if (user && user.isActive !== false && !user.isLocked) {
         req.user = user;
       }
     }

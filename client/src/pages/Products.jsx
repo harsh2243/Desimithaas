@@ -28,7 +28,7 @@ function Products() {
       page: currentPage,
       limit: 12
     }),
-    select: (response) => response.data.data,
+    select: (response) => response.data.data || response.data,
     placeholderData: (previousData) => previousData
   })
 
@@ -62,6 +62,10 @@ function Products() {
   const categories = data?.categories || []
   const products = data?.products || []
   const pagination = data?.pagination || {}
+  const totalProducts = pagination.totalProducts ?? pagination.total ?? products.length
+  const totalPages = pagination.totalPages ?? pagination.pages ?? 1
+  const hasPrevPage = pagination.hasPrevPage ?? currentPage > 1
+  const hasNextPage = pagination.hasNextPage ?? currentPage < totalPages
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -167,7 +171,7 @@ function Products() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
               <div className="flex items-center space-x-4">
                 <span className="text-sm text-gray-600">
-                  {pagination.totalProducts} products found
+                  {totalProducts} products found
                 </span>
               </div>
 
@@ -245,22 +249,22 @@ function Products() {
             )}
 
             {/* Pagination */}
-            {pagination.totalPages > 1 && (
+            {totalPages > 1 && (
               <div className="flex justify-center mt-12">
                 <div className="flex space-x-2">
                   <button
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={!pagination.hasPrevPage}
+                    disabled={!hasPrevPage}
                     className="btn btn-outline btn-sm disabled:opacity-50"
                   >
                     Previous
                   </button>
                   
-                  {[...Array(pagination.totalPages)].map((_, index) => {
+                  {[...Array(totalPages)].map((_, index) => {
                     const page = index + 1
                     if (
                       page === 1 ||
-                      page === pagination.totalPages ||
+                      page === totalPages ||
                       (page >= currentPage - 2 && page <= currentPage + 2)
                     ) {
                       return (
@@ -284,8 +288,8 @@ function Products() {
                   })}
                   
                   <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, pagination.totalPages))}
-                    disabled={!pagination.hasNextPage}
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={!hasNextPage}
                     className="btn btn-outline btn-sm disabled:opacity-50"
                   >
                     Next

@@ -46,19 +46,19 @@ router.get('/dashboard', async (req, res) => {
               $sum: { $cond: [{ $gte: ['$createdAt', startOfMonth] }, 1, 0] }
             },
             pendingOrders: {
-              $sum: { $cond: [{ $eq: ['$orderStatus', 'pending'] }, 1, 0] }
+              $sum: { $cond: [{ $eq: ['$status', 'pending'] }, 1, 0] }
             },
             processingOrders: {
-              $sum: { $cond: [{ $eq: ['$orderStatus', 'confirmed'] }, 1, 0] }
+              $sum: { $cond: [{ $eq: ['$status', 'confirmed'] }, 1, 0] }
             },
             shippedOrders: {
-              $sum: { $cond: [{ $eq: ['$orderStatus', 'shipped'] }, 1, 0] }
+              $sum: { $cond: [{ $eq: ['$status', 'shipped'] }, 1, 0] }
             },
             deliveredOrders: {
-              $sum: { $cond: [{ $eq: ['$orderStatus', 'delivered'] }, 1, 0] }
+              $sum: { $cond: [{ $eq: ['$status', 'delivered'] }, 1, 0] }
             },
             cancelledOrders: {
-              $sum: { $cond: [{ $eq: ['$orderStatus', 'cancelled'] }, 1, 0] }
+              $sum: { $cond: [{ $eq: ['$status', 'cancelled'] }, 1, 0] }
             }
           }
         }
@@ -164,14 +164,14 @@ router.get('/dashboard', async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(10)
       .populate('user', 'firstName lastName email')
-      .select('orderNumber orderStatus finalAmount paymentMethod createdAt user items');
+      .select('orderNumber status finalAmount paymentMethod createdAt user items');
 
     // 4. ORDER STATUS DISTRIBUTION
     const orderStatusDistribution = await Order.aggregate([
       { $match: { user: { $nin: adminUserIds } } },
       {
         $group: {
-          _id: '$orderStatus',
+          _id: '$status',
           count: { $sum: 1 },
           revenue: { $sum: '$finalAmount' }
         }
@@ -476,8 +476,7 @@ router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
       .select('-password')
       .sort(sort)
       .limit(parseInt(limit))
-      .skip(skip)
-      .populate('orders', 'orderNumber totalAmount status createdAt');
+      .skip(skip);
     
     // Get total count
     const totalUsers = await User.countDocuments(filter);
@@ -551,8 +550,6 @@ router.get('/users/:userId', authenticateToken, requireAdmin, async (req, res) =
     
     const user = await User.findById(userId)
       .select('-password')
-      .populate('orders')
-      .populate('wishlist')
       .populate('cart.product');
     
     if (!user) {
@@ -574,6 +571,143 @@ router.get('/users/:userId', authenticateToken, requireAdmin, async (req, res) =
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch user details'
+    });
+  }
+});
+
+// @route   PUT /api/admin/users/:userId/role
+// @desc    Update user role
+// @access  Admin
+router.put('/users/:userId/role', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { role } = req.body;
+
+    // Validate role
+    if (!['user', 'admin'].includes(role)) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Invalid role. Must be either user or admin'
+      });
+    }
+
+    // Prevent admin from changing their own role
+    if (userId === req.user._id.toString()) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Cannot change your own role'
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'User not found'
+      });
+    }
+
+    // If demoting from admin, check if it's the last admin
+    if (user.role === 'admin' && role === 'user') {
+      const adminCount = await User.countDocuments({ role: 'admin', isActive: { $ne: false } });
+      if (adminCount <= 1) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Cannot demote the last admin. Promote another user to admin first.'
+        });
+      }
+    }
+
+    user.role = role;
+    await user.save();
+
+    res.json({
+      status: 'success',
+      message: `User role updated to ${role} successfully`,
+      data: {
+        user: {
+          _id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+          isActive: user.isActive
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Update user role error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to update user role'
+    });
+  }
+});
+
+// @route   PUT /api/admin/users/:userId/toggle-status
+// @desc    Toggle user active status
+// @access  Admin
+router.put('/users/:userId/toggle-status', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Prevent admin from toggling their own status
+    if (userId === req.user._id.toString()) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Cannot toggle your own account status'
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'User not found'
+      });
+    }
+
+    // If deactivating an admin, check if it's the last active admin
+    if (user.role === 'admin' && user.isActive !== false) {
+      const activeAdminCount = await User.countDocuments({ 
+        role: 'admin', 
+        isActive: { $ne: false },
+        _id: { $ne: userId }
+      });
+      if (activeAdminCount === 0) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Cannot deactivate the last active admin'
+        });
+      }
+    }
+
+    // Toggle the status
+    const currentStatus = user.isActive !== false; // treat undefined as true (active)
+    user.isActive = !currentStatus;
+    await user.save();
+
+    res.json({
+      status: 'success',
+      message: `User ${user.isActive ? 'activated' : 'deactivated'} successfully`,
+      data: {
+        user: {
+          _id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+          isActive: user.isActive
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Toggle user status error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to toggle user status'
     });
   }
 });
@@ -1013,15 +1147,15 @@ router.get('/orders/stats', authenticateToken, requireAdmin, async (req, res) =>
     
     // Get order statistics
     const totalOrders = await Order.countDocuments();
-    const pendingOrders = await Order.countDocuments({ orderStatus: 'pending' });
-    const confirmedOrders = await Order.countDocuments({ orderStatus: 'confirmed' });
-    const shippedOrders = await Order.countDocuments({ orderStatus: 'shipped' });
-    const deliveredOrders = await Order.countDocuments({ orderStatus: 'delivered' });
-    const cancelledOrders = await Order.countDocuments({ orderStatus: 'cancelled' });
+    const pendingOrders = await Order.countDocuments({ status: 'pending' });
+    const confirmedOrders = await Order.countDocuments({ status: 'confirmed' });
+    const shippedOrders = await Order.countDocuments({ status: 'shipped' });
+    const deliveredOrders = await Order.countDocuments({ status: 'delivered' });
+    const cancelledOrders = await Order.countDocuments({ status: 'cancelled' });
     
     // Get revenue statistics
     const revenueStats = await Order.aggregate([
-      { $match: { orderStatus: { $ne: 'cancelled' } } },
+      { $match: { status: { $ne: 'cancelled' } } },
       {
         $group: {
           _id: null,
@@ -1035,7 +1169,7 @@ router.get('/orders/stats', authenticateToken, requireAdmin, async (req, res) =>
       { 
         $match: { 
           createdAt: { $gte: todayStart },
-          orderStatus: { $ne: 'cancelled' }
+          status: { $ne: 'cancelled' }
         } 
       },
       {
@@ -1089,7 +1223,7 @@ router.get('/quick-actions', async (req, res) => {
     const [pendingOrders, lowStockProducts, newCustomers, todayStats] = await Promise.all([
       // Pending orders
       Order.find({ 
-        orderStatus: 'pending',
+        status: 'pending',
         user: { $nin: adminUserIds }
       })
       .sort({ createdAt: -1 })
@@ -1182,14 +1316,14 @@ router.get('/export/orders', async (req, res) => {
     }
     
     if (status) {
-      filter.orderStatus = status;
+      filter.status = status;
     }
 
     // Get orders
     const orders = await Order.find(filter)
       .sort({ createdAt: -1 })
       .populate('user', 'firstName lastName email phone')
-      .select('orderNumber orderStatus paymentMethod paymentStatus finalAmount totalAmount shippingCharge discount items shippingAddress createdAt');
+      .select('orderNumber status paymentMethod paymentStatus finalAmount totalAmount shippingCharge discount items shippingAddress createdAt');
 
     // Convert to CSV format
     const csvHeader = 'Order Number,Customer Name,Email,Phone,Order Status,Payment Method,Total Amount,Shipping,Discount,Final Amount,Order Date,Items,Shipping Address\n';
@@ -1204,7 +1338,7 @@ router.get('/export/orders', async (req, res) => {
         customerName,
         order.user.email,
         order.user.phone || '',
-        order.orderStatus,
+        order.status,
         order.paymentMethod,
         order.totalAmount,
         order.shippingCharge,
@@ -1669,7 +1803,7 @@ router.get('/orders', async (req, res) => {
     // Build filter
     const filter = {};
     if (status && status !== 'all') {
-      filter.orderStatus = status;
+      filter.status = status;
     }
 
     // Add search functionality
@@ -1695,7 +1829,7 @@ router.get('/orders', async (req, res) => {
       .limit(parseInt(limit))
       .skip(skip)
       .populate('user', 'firstName lastName email phone')
-      .select('orderNumber orderStatus paymentStatus paymentMethod totalAmount shippingCharge discount finalAmount createdAt items shippingAddress notes estimatedDelivery deliveredAt trackingNumber');
+      .select('orderNumber status paymentStatus paymentMethod totalAmount shippingCharge discount finalAmount createdAt items shippingAddress notes estimatedDelivery deliveredAt trackingNumber');
 
     // Get total count
     const totalOrders = await Order.countDocuments(filter);
@@ -1752,11 +1886,19 @@ router.put('/orders/:orderId/status', async (req, res) => {
       });
     }
 
-    console.log(`Order ${orderId} current status: ${existingOrder.orderStatus}, updating to: ${orderStatus}`);
+    console.log(`Order ${orderId} current status: ${existingOrder.status}, updating to: ${orderStatus}`);
 
-    // Find and update the order
+    // Prevent status changes for delivered orders
+    if (existingOrder.status === 'delivered') {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Cannot change status of delivered orders. Order is already delivered.'
+      });
+    }
+
+    // Find and update the order (Note: DB field is 'status', not 'orderStatus')
     const updateData = { 
-      orderStatus,
+      status: orderStatus,  // Map orderStatus from request to 'status' field in DB
       updatedAt: new Date()
     };
     if (trackingNumber) updateData.trackingNumber = trackingNumber;
@@ -1769,7 +1911,7 @@ router.put('/orders/:orderId/status', async (req, res) => {
       { new: true, runValidators: true }
     ).populate('user', 'firstName lastName email');
 
-    console.log(`Order ${orderId} successfully updated to status: ${order.orderStatus}`);
+    console.log(`Order ${orderId} successfully updated to status: ${order.status}`);
 
     res.json({
       status: 'success',
@@ -1960,8 +2102,7 @@ router.get('/analytics', async (req, res) => {
 router.get('/profile', async (req, res) => {
   try {
     const admin = await User.findById(req.user._id)
-      .select('-password')
-      .populate('orders', 'orderNumber totalAmount status createdAt');
+      .select('-password');
 
     if (!admin) {
       return res.status(404).json({
@@ -2441,12 +2582,12 @@ router.get('/activity', async (req, res) => {
       .limit(parseInt(limit))
       .skip(skip)
       .populate('user', 'firstName lastName email')
-      .select('orderNumber orderStatus finalAmount createdAt user');
+      .select('orderNumber status finalAmount createdAt user');
 
     // Transform to activity format
     const activities = recentActivity.map(order => ({
       type: 'order',
-      action: `Order ${order.orderNumber} - ${order.orderStatus}`,
+      action: `Order ${order.orderNumber} - ${order.status}`,
       description: `${order.user?.firstName} ${order.user?.lastName} placed an order for ₹${order.finalAmount}`,
       timestamp: order.createdAt,
       user: order.user,
@@ -2454,7 +2595,7 @@ router.get('/activity', async (req, res) => {
         orderId: order._id,
         orderNumber: order.orderNumber,
         amount: order.finalAmount,
-        status: order.orderStatus
+        status: order.status
       }
     }));
 

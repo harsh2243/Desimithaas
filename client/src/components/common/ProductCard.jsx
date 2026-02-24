@@ -44,7 +44,7 @@ function ProductCard({ product }) {
       <Link to={`/products/${product._id}`}>
         <div className="relative overflow-hidden">
           <img
-            src={product.mainImage || product.images?.[0]?.url || '/thekua-placeholder.svg'}
+            src={product.mainImage || product.image || product.images?.[0]?.url || '/thekua-placeholder.svg'}
             alt={product.name}
             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
             onError={(e) => {

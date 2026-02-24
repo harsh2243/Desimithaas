@@ -1,8 +1,13 @@
 import axios from 'axios'
 
+const backendUrl = (import.meta.env.VITE_BACKEND_URL || '').trim()
+const apiBaseUrl = backendUrl
+  ? `${backendUrl.replace(/\/$/, '')}/api`
+  : '/api'
+
 // Create axios instance
 const api = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL + '/api',
+  baseURL: apiBaseUrl,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -11,7 +16,7 @@ const api = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('token') || localStorage.getItem('adminToken')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -28,6 +33,8 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
+      localStorage.removeItem('adminToken')
+      localStorage.removeItem('adminUser')
       window.location.href = '/auth/login'
     }
     return Promise.reject(error)

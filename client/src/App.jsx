@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 
 // Layout
@@ -52,6 +52,7 @@ function App() {
         <Route path="/auth/login" element={<Login />} />
         <Route path="/auth/register" element={<Register />} />
         <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+        <Route path="/admin/login" element={<Navigate to="/auth/login" replace />} />
 
         {/* Protected User Routes */}
         <Route path="/" element={<Layout />}>

@@ -59,9 +59,7 @@ router.get('/', requireAdmin, async (req, res) => {
   }
 });
 
-// @route   GET /api/coupons/active
-// @desc    Get active coupons for users
-// @access  Private
+
 router.get('/active', async (req, res) => {
   try {
     const now = new Date();
@@ -178,9 +176,7 @@ router.post('/', requireAdmin, async (req, res) => {
   }
 });
 
-// @route   PUT /api/coupons/:id
-// @desc    Update coupon
-// @access  Private/Admin
+
 router.put('/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
@@ -240,9 +236,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
   }
 });
 
-// @route   DELETE /api/coupons/:id
-// @desc    Delete coupon
-// @access  Private/Admin
+
 router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
@@ -270,9 +264,7 @@ router.delete('/:id', requireAdmin, async (req, res) => {
   }
 });
 
-// @route   POST /api/coupons/validate
-// @desc    Validate coupon code
-// @access  Private
+
 router.post('/validate', async (req, res) => {
   try {
     const { code, orderAmount, cartItems, userId } = req.body;

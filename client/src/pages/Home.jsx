@@ -10,7 +10,7 @@ function Home() {
   const { data: featuredProducts, isLoading } = useQuery({
     queryKey: ['featuredProducts'],
     queryFn: () => productsAPI.getFeaturedProducts(),
-    select: (response) => response.data.data.products
+    select: (response) => response.data.data?.products || response.data.products || []
   })
 
   const fadeInUp = {
@@ -27,26 +27,35 @@ function Home() {
     }
   }
 
+  const highlights = [
+    { label: 'Freshly Prepared', value: 'Daily Batches' },
+    { label: 'Customer Rating', value: '4.9/5 Avg' },
+    { label: 'Delivery Coverage', value: 'Pan India' }
+  ]
+
   return (
     <div>
       {/* Hero Section */}
       <section className="relative bg-gradient-to-r from-primary-600 to-primary-700 text-white overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-20"></div>
-        <div className="container relative py-20 lg:py-32">
+        <div className="container relative py-16 lg:py-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <motion.div 
-              className="space-y-8"
+              className="space-y-6"
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
             >
+              <span className="inline-flex items-center rounded-full bg-white/15 px-4 py-1.5 text-sm font-medium text-primary-100">
+                Premium Traditional Thekua
+              </span>
               <h1 className="text-4xl lg:text-6xl font-display font-bold leading-tight">
-                Authentic
-                <span className="block text-primary-200">Traditional Sweets</span>
+                Authentic Taste,
+                <span className="block text-primary-200">Modern Convenience</span>
               </h1>
-              <p className="text-xl text-primary-100 leading-relaxed">
-                Experience the rich taste of heritage with our handmade Thekua and traditional sweets. 
-                Made with love, served with pride.
+              <p className="text-lg lg:text-xl text-primary-100 leading-relaxed max-w-xl">
+                Experience handcrafted Thekua made with trusted ingredients and traditional recipes,
+                packed hygienically and delivered fresh to your doorstep.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
@@ -63,6 +72,15 @@ function Home() {
                   Learn More
                 </Link>
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                {highlights.map((item) => (
+                  <div key={item.label} className="rounded-xl bg-white/10 border border-white/20 p-3">
+                    <p className="text-xs text-primary-100">{item.label}</p>
+                    <p className="text-sm font-semibold text-white">{item.value}</p>
+                  </div>
+                ))}
+              </div>
             </motion.div>
             
             <motion.div
@@ -71,14 +89,37 @@ function Home() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              <div className="aspect-square rounded-full bg-gradient-to-br from-primary-400 to-primary-800 p-8">
+              <div className="bg-white/10 border border-white/20 rounded-3xl p-6 lg:p-8 backdrop-blur-sm">
                 <img
-                  src="https://images.unsplash.com/photo-1599599810769-bcde5a160d32?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                  src="https://img.freepik.com/free-photo/front-view-delicious-sand-cookies-inside-plate-white-table-cake-cookie-biscuit_140725-79014.jpg?t=st=1771841558~exp=1771845158~hmac=755e7dc67b6aa77fa8f67750108aa6b59944ead381e09a05b01390179e1eadc4&w=1480"
                   alt="Traditional Thekua"
-                  className="w-full h-full object-cover rounded-full"
+                  className="w-full h-72 lg:h-80 object-cover rounded-2xl bg-white"
+                  onError={(e) => {
+                    if (e.currentTarget.src.includes('79014.jpg')) {
+                      e.currentTarget.src = 'https://img.freepik.com/free-photo/front-view-delicious-sand-cookies-inside-plate-light-white-table-cake-cookie-biscuit_140725-79013.jpg?t=st=1771841582~exp=1771845182~hmac=9fef0fbf9df5bb0ee5bea8db78da0f55e8ae4d50bbf69aae1f4c7d2a42dab6a1&w=1480'
+                    } else if (e.currentTarget.src.includes('79013.jpg')) {
+                      e.currentTarget.src = 'https://www.yummefy.com/uploads/1804b698e2.jpg'
+                    } else {
+                      e.currentTarget.src = '/thekua-placeholder.svg'
+                    }
+                  }}
                 />
+                <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+                  <div className="rounded-lg bg-white/10 p-2">
+                    <p className="text-xs text-primary-100">Ingredients</p>
+                    <p className="text-sm font-semibold">Premium</p>
+                  </div>
+                  <div className="rounded-lg bg-white/10 p-2">
+                    <p className="text-xs text-primary-100">Taste</p>
+                    <p className="text-sm font-semibold">Authentic</p>
+                  </div>
+                  <div className="rounded-lg bg-white/10 p-2">
+                    <p className="text-xs text-primary-100">Packaging</p>
+                    <p className="text-sm font-semibold">Hygienic</p>
+                  </div>
+                </div>
               </div>
-              <div className="absolute -bottom-6 -right-6 bg-white text-primary-600 rounded-full p-4 shadow-lg">
+              <div className="absolute -bottom-5 -right-5 bg-white text-primary-600 rounded-full p-3 shadow-lg">
                 <Award className="w-8 h-8" />
               </div>
             </motion.div>
@@ -89,6 +130,20 @@ function Home() {
       {/* Features Section */}
       <section className="py-16 bg-white">
         <div className="container">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-10"
+          >
+            <h2 className="text-3xl lg:text-4xl font-display font-bold text-gray-900 mb-3">
+              Why Choose TheKua
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Built on quality, consistency, and authentic preparation methods.
+            </p>
+          </motion.div>
+
           <motion.div
             variants={staggerContainer}
             initial="initial"
@@ -116,7 +171,7 @@ function Home() {
               <motion.div
                 key={index}
                 variants={fadeInUp}
-                className="text-center space-y-4"
+                className="text-center space-y-4 card p-6"
               >
                 <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto">
                   <feature.icon className="w-8 h-8 text-primary-600" />
@@ -139,16 +194,16 @@ function Home() {
             className="text-center mb-12"
           >
             <h2 className="text-3xl lg:text-4xl font-display font-bold text-gray-900 mb-4">
-              Featured Products
+              Bestselling Products
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Discover our most popular traditional sweets, loved by customers across the country
+              Discover our most popular Thekua selections loved by customers across the country.
             </p>
           </motion.div>
 
           {isLoading ? (
             <LoadingSpinner />
-          ) : (
+          ) : featuredProducts?.length ? (
             <motion.div
               variants={staggerContainer}
               initial="initial"
@@ -162,6 +217,10 @@ function Home() {
                 </motion.div>
               ))}
             </motion.div>
+          ) : (
+            <div className="card p-8 text-center">
+              <p className="text-gray-600">Featured products will appear here once added from admin panel.</p>
+            </div>
           )}
 
           <motion.div

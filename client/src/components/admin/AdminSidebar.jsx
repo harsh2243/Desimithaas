@@ -58,6 +58,8 @@ function AdminSidebar({ sidebarOpen, setSidebarOpen, currentPath }) {
   ]
 
   const handleLogout = () => {
+    localStorage.removeItem('adminToken')
+    localStorage.removeItem('adminUser')
     logout()
     setSidebarOpen(false)
     navigate('/')  // Redirect to home page

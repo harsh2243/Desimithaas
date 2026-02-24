@@ -1,8 +1,8 @@
-  {
-    "rewrites"; [
-      {
-        "source": "/(.*)",
-        "destination": "/"
-      }
-    ]
-  }
+export default {
+  rewrites: [
+    {
+      source: '/(.*)',
+      destination: '/'
+    }
+  ]
+};

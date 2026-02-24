@@ -1,20 +1,18 @@
-  {
-    "version"; 2,
-    "builds"; [
+export default {
+    version: 2,
+    builds: [
         {
-            "src": "server.js",
-            "use": "@vercel/node",
-            "config": {
-                "includeFiles": [
-                    "dist/**"
-                ]
+            src: 'server.js',
+            use: '@vercel/node',
+            config: {
+                includeFiles: ['dist/**']
             }
         }
     ],
-    "routes"; [
+    routes: [
         {
-            "src": "/(.*)",
-            "dest": "server.js"
+            src: '/(.*)',
+            dest: 'server.js'
         }
     ]
-}
+};
